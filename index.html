@@ -1,1 +1,977 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partho | Student & Tech Enthusiast</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#080911',
+                        cardBg: 'rgba(15, 23, 42, 0.65)',
+                        cyberNeon: '#00f0ff',
+                        cyberPurple: '#a855f7',
+                        cyberPink: '#ec4899',
+                        terminalGreen: '#10b981'
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #080911;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .glass-panel-hover:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.2);
+            transform: translateY(-4px);
+        }
+        .text-glow {
+            text-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+        }
+        .neon-border {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #080911;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .modal-active {
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col justify-between">
 
+    <!-- Interactive Background Canvas -->
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- Top Navigation Bar -->
+    <nav class="fixed top-0 left-0 w-full z-40 glass-panel border-b border-slate-800/80 px-4 md:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <!-- Brand Logo -->
+            <a href="#home" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyberNeon to-cyberPurple p-[2px]">
+                    <img src="https://github.com/parthobhai61-dot.png" alt="Partho" class="w-full h-full object-cover rounded-[10px]">
+                </div>
+                <div>
+                    <span class="font-mono font-bold text-lg text-white group-hover:text-cyberNeon transition-colors">&lt;Partho/&gt;</span>
+                    <span class="block text-[10px] text-slate-400 font-mono">C++ & Python Dev</span>
+                </div>
+            </a>
+
+            <!-- Nav Links -->
+            <div class="hidden md:flex items-center gap-8 font-mono text-sm">
+                <a href="#about" class="text-slate-300 hover:text-cyberNeon transition-colors"><span class="text-cyberNeon">01.</span> About</a>
+                <a href="#projects" class="text-slate-300 hover:text-cyberNeon transition-colors"><span class="text-cyberNeon">02.</span> Projects</a>
+                <a href="#gallery" class="text-slate-300 hover:text-cyberNeon transition-colors"><span class="text-cyberNeon">03.</span> Gallery</a>
+                <a href="#blog" class="text-slate-300 hover:text-cyberNeon transition-colors"><span class="text-cyberNeon">04.</span> Video Blog</a>
+                <a href="#livecode" class="text-slate-300 hover:text-cyberNeon transition-colors"><span class="text-cyberNeon">05.</span> Live Coding</a>
+            </div>
+
+            <!-- Header Controls -->
+            <div class="flex items-center gap-4">
+                <!-- Visitor Counter Badge -->
+                <div class="hidden sm:flex items-center gap-2 bg-slate-900/80 border border-slate-700/60 px-3 py-1.5 rounded-full text-xs font-mono text-slate-300">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span>Visits: <strong id="visitorCountDisplay" class="text-cyberNeon">...</strong></span>
+                </div>
+
+                <!-- Admin Auth Button -->
+                <button id="adminLoginBtn" onclick="openAdminModal()" class="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-gradient-to-r from-purple-900/40 to-slate-900 border border-purple-500/30 hover:border-cyberPurple text-purple-300 text-xs font-mono transition-all">
+                    <i class="fa-solid fa-lock text-cyberPurple" id="adminIcon"></i>
+                    <span id="adminBtnText">Admin Access</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="pt-24 px-4 md:px-8 max-w-7xl mx-auto w-full space-y-24 mb-20">
+
+        <!-- HERO SECTION / ABOUT ME -->
+        <section id="home" class="min-h-[80vh] flex flex-col justify-center items-center text-center py-10 relative">
+            <div class="relative mb-6">
+                <div class="absolute -inset-1 rounded-full bg-gradient-to-r from-cyberNeon via-cyberPurple to-cyberPink blur-lg opacity-70 animate-pulse"></div>
+                <img src="https://github.com/parthobhai61-dot.png" alt="Partho Biswas" class="relative w-36 h-36 md:w-44 md:h-44 rounded-full object-cover border-2 border-cyberNeon/80 shadow-2xl">
+            </div>
+
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-slate-300 text-xs font-mono mb-4">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span> C++ & Python Learner | Robotics & AI Enthusiast
+            </div>
+
+            <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-4">
+                Hi, I'm <span class="bg-gradient-to-r from-cyberNeon via-purple-400 to-cyberPink bg-clip-text text-transparent text-glow">Partho</span>
+            </h1>
+
+            <p class="max-w-3xl text-slate-300 text-base md:text-lg leading-relaxed mb-8 font-light">
+                Hello and welcome to my personal website! I am a student with a strong passion for learning, creativity, and technology. I enjoy exploring programming, robotics, and digital design, and I am always curious about how innovation can solve real-world problems.
+            </p>
+
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="https://github.com/parthobhai61-dot" target="_blank" class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-mono text-sm px-6 py-3 rounded-xl border border-slate-700 hover:border-cyberNeon transition-all shadow-lg">
+                    <i class="fa-brands fa-github text-lg text-cyberNeon"></i> GitHub Profile
+                </a>
+                <a href="#about" class="flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white font-mono text-sm px-6 py-3 rounded-xl transition-all shadow-lg shadow-cyan-950/50">
+                    <i class="fa-solid fa-user-astronaut"></i> Read Full Bio
+                </a>
+            </div>
+        </section>
+
+        <!-- DETAILED ABOUT ME SECTION -->
+        <section id="about" class="glass-panel p-6 md:p-10 rounded-2xl border border-slate-800">
+            <h2 class="text-2xl md:text-3xl font-bold text-white mb-6 flex items-center gap-3">
+                <i class="fa-solid fa-terminal text-cyberNeon"></i>
+                <span>About Self</span>
+            </h2>
+
+            <div class="grid md:grid-cols-3 gap-8 items-center">
+                <div class="md:col-span-2 space-y-4 text-slate-300 text-sm md:text-base leading-relaxed">
+                    <p>
+                        Over time, I have practiced coding in languages like <strong class="text-cyberNeon font-mono">C++</strong> and <strong class="text-cyberPurple font-mono">Python</strong>, experimented with IoT concepts, and worked on projects that combine imagination with science. Alongside my technical journey, I also enjoy designing websites and creating digital art that reflects both creativity and functionality.
+                    </p>
+                    <p>
+                        My vision is to continue growing as a learner, take on new challenges, and share my journey with others who are passionate about technology. I believe that every step in learning brings me closer to achieving my dream of contributing to the future of robotics and artificial intelligence.
+                    </p>
+                    <p class="text-slate-400 font-mono text-xs pt-2">
+                        This website is my digital space to showcase my projects, ideas, and experiences. Thank you for visiting, and I hope you enjoy exploring my work!
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-800 font-mono text-xs space-y-3">
+                    <div class="text-slate-400 border-b border-slate-800 pb-2 flex justify-between">
+                        <span>// TECHNICAL STACK</span>
+                        <i class="fa-solid fa-microchip text-cyberNeon"></i>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-300"><i class="fa-solid fa-code text-cyan-400 mr-2"></i>C++ (CPP)</span>
+                        <span class="text-emerald-400 font-bold">Active</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-300"><i class="fa-brands fa-python text-yellow-400 mr-2"></i>Python</span>
+                        <span class="text-emerald-400 font-bold">Active</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-300"><i class="fa-solid fa-robot text-purple-400 mr-2"></i>Robotics / IoT</span>
+                        <span class="text-cyan-400">Exploring</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-300"><i class="fa-solid fa-palette text-pink-400 mr-2"></i>Digital Design</span>
+                        <span class="text-cyan-400">Creative</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MASTER PROJECTS HUB SECTION -->
+        <section id="projects" class="space-y-6">
+            <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+                        <i class="fa-solid fa-cubes text-cyberPurple"></i>
+                        <span>Projects Hub</span>
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-1">All content categorized into dedicated interactive subsections</p>
+                </div>
+                <div class="flex gap-2 font-mono text-xs">
+                    <a href="#gallery" class="px-3 py-1.5 rounded bg-slate-900 border border-slate-700 hover:border-cyberNeon text-slate-300">Gallery</a>
+                    <a href="#blog" class="px-3 py-1.5 rounded bg-slate-900 border border-slate-700 hover:border-cyberPurple text-slate-300">Videos</a>
+                    <a href="#livecode" class="px-3 py-1.5 rounded bg-slate-900 border border-slate-700 hover:border-terminalGreen text-slate-300">Code Sandbox</a>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Quick Link Card: Gallery -->
+                <a href="#gallery" class="glass-panel p-6 rounded-xl glass-panel-hover transition-all group block">
+                    <div class="w-12 h-12 rounded-lg bg-cyan-950/60 border border-cyan-500/30 flex items-center justify-center text-cyberNeon text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-images"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2 group-hover:text-cyberNeon">1. Screenshots & Gallery</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed">Visual showcase of robotics experiments, circuit diagrams, UI designs, and project screenshots.</p>
+                </a>
+
+                <!-- Quick Link Card: Video Blog -->
+                <a href="#blog" class="glass-panel p-6 rounded-xl glass-panel-hover transition-all group block">
+                    <div class="w-12 h-12 rounded-lg bg-purple-950/60 border border-purple-500/30 flex items-center justify-center text-cyberPurple text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-video"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2 group-hover:text-cyberPurple">2. Video Blog</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed">Demonstrations, video logs of working hardware models, and coding walkthroughs.</p>
+                </a>
+
+                <!-- Quick Link Card: Live Code Sandbox -->
+                <a href="#livecode" class="glass-panel p-6 rounded-xl glass-panel-hover transition-all group block">
+                    <div class="w-12 h-12 rounded-lg bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-terminalGreen text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-code"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2 group-hover:text-terminalGreen">3. Live Code Sandbox</h3>
+                    <p class="text-slate-400 text-xs leading-relaxed">Interactive terminal where visitors can select and run my C++ & Python scripts live.</p>
+                </a>
+            </div>
+        </section>
+
+        <!-- SECTION 1: GALLERY -->
+        <section id="gallery" class="space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-images text-cyberNeon"></i> Gallery
+                </h3>
+                <span id="galleryCountBadge" class="text-xs font-mono bg-slate-900 border border-slate-700 px-3 py-1 rounded-full text-slate-400">0 items</span>
+            </div>
+
+            <!-- Admin Upload Box for Gallery (Visible ONLY in Admin Mode) -->
+            <div id="galleryAdminPanel" class="hidden glass-panel p-4 rounded-xl border border-cyan-500/40 bg-cyan-950/10 space-y-3">
+                <div class="text-xs font-mono text-cyberNeon flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Admin Upload: New Gallery Item
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
+                    <input type="text" id="galleryTitleInput" placeholder="Image Title or Project Name" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyberNeon">
+                    <input type="url" id="galleryUrlInput" placeholder="Image Direct URL (https://...)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyberNeon">
+                </div>
+                <textarea id="galleryDescInput" rows="2" placeholder="Brief description of screenshot/photo..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyberNeon"></textarea>
+                <button onclick="publishGalleryItem()" class="bg-cyberNeon text-slate-950 font-bold px-4 py-2 rounded-lg text-xs hover:bg-cyan-300 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Add To Gallery
+                </button>
+            </div>
+
+            <!-- Gallery Container Grid -->
+            <div id="galleryGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically Populated -->
+            </div>
+        </section>
+
+        <!-- SECTION 2: VIDEO BLOG -->
+        <section id="blog" class="space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-video text-cyberPurple"></i> Video Blog
+                </h3>
+                <span id="blogCountBadge" class="text-xs font-mono bg-slate-900 border border-slate-700 px-3 py-1 rounded-full text-slate-400">0 videos</span>
+            </div>
+
+            <!-- Admin Upload Box for Video (Visible ONLY in Admin Mode) -->
+            <div id="blogAdminPanel" class="hidden glass-panel p-4 rounded-xl border border-purple-500/40 bg-purple-950/10 space-y-3">
+                <div class="text-xs font-mono text-cyberPurple flex items-center gap-2">
+                    <i class="fa-solid fa-video"></i> Admin Upload: New Video Blog
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
+                    <input type="text" id="videoTitleInput" placeholder="Video Title" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyberPurple">
+                    <input type="url" id="videoUrlInput" placeholder="Video URL (.mp4 or YouTube Embed link)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyberPurple">
+                </div>
+                <textarea id="videoDescInput" rows="2" placeholder="Video description & topics covered..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyberPurple"></textarea>
+                <button onclick="publishVideoItem()" class="bg-cyberPurple text-white font-bold px-4 py-2 rounded-lg text-xs hover:bg-purple-600 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-upload"></i> Publish Video Post
+                </button>
+            </div>
+
+            <!-- Video Grid -->
+            <div id="videoGrid" class="grid sm:grid-cols-2 gap-6">
+                <!-- Dynamically Populated -->
+            </div>
+        </section>
+
+        <!-- SECTION 3: LIVE CODING (C++ & Python Only) -->
+        <section id="livecode" class="space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-code text-terminalGreen"></i> Live Code Sandbox
+                    </h3>
+                    <p class="text-xs text-slate-400 font-mono mt-1">Exclusively focusing on C++ & Python scripts</p>
+                </div>
+                <span id="codeCountBadge" class="text-xs font-mono bg-slate-900 border border-slate-700 px-3 py-1 rounded-full text-slate-400">0 scripts</span>
+            </div>
+
+            <!-- Admin Upload Box for Code Snippets -->
+            <div id="codeAdminPanel" class="hidden glass-panel p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/10 space-y-3">
+                <div class="text-xs font-mono text-terminalGreen flex items-center gap-2">
+                    <i class="fa-solid fa-file-code"></i> Admin Upload: New Code Script
+                </div>
+                <div class="grid md:grid-cols-3 gap-3">
+                    <input type="text" id="codeTitleInput" placeholder="Script Name / Purpose" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-terminalGreen">
+                    <select id="codeLangInput" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-terminalGreen font-mono">
+                        <option value="cpp">C++ (cpp)</option>
+                        <option value="python">Python (py)</option>
+                    </select>
+                    <input type="text" id="codeSimOutputInput" placeholder="Expected Live Console Output" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-terminalGreen">
+                </div>
+                <textarea id="codeBodyInput" rows="5" placeholder="// Paste your C++ or Python code snippet here..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs text-emerald-400 font-mono focus:outline-none focus:border-terminalGreen"></textarea>
+                <button onclick="publishCodeItem()" class="bg-terminalGreen text-slate-950 font-bold px-4 py-2 rounded-lg text-xs hover:bg-emerald-400 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-file-export"></i> Save Script To Repository
+                </button>
+            </div>
+
+            <!-- Code Sandbox Cards Grid -->
+            <div id="codeGrid" class="grid sm:grid-cols-2 gap-6">
+                <!-- Dynamically Populated -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-center font-mono text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                &copy; 2026 Partho. Built with Passion, C++ & Python.
+            </div>
+            <div class="flex items-center gap-6 text-sm">
+                <a href="https://github.com/parthobhai61-dot" target="_blank" class="hover:text-cyberNeon transition-colors flex items-center gap-1">
+                    <i class="fa-brands fa-github"></i> github.com/parthobhai61-dot
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL OVERLAYS (ALADA AREA DISPLAY) -->
+
+    <!-- IMAGE FULLSCREEN MODAL OVERLAY -->
+    <div id="imageModal" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
+        <button onclick="closeModals()" class="absolute top-6 right-6 text-slate-400 hover:text-white text-2xl z-10">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="max-w-4xl w-full max-h-[90vh] flex flex-col items-center">
+            <img id="modalImg" src="" alt="" class="max-h-[70vh] object-contain rounded-lg border border-slate-700 shadow-2xl mb-4">
+            <h4 id="modalImgTitle" class="text-xl font-bold text-white mb-1"></h4>
+            <p id="modalImgDesc" class="text-xs text-slate-400 text-center max-w-xl"></p>
+        </div>
+    </div>
+
+    <!-- VIDEO THEATER MODAL OVERLAY -->
+    <div id="videoModal" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
+        <button onclick="closeModals()" class="absolute top-6 right-6 text-slate-400 hover:text-white text-2xl z-10">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="max-w-4xl w-full space-y-4">
+            <div id="videoPlayerContainer" class="w-full aspect-video rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl">
+                <!-- Video Element Injected Here -->
+            </div>
+            <h4 id="modalVideoTitle" class="text-xl font-bold text-white"></h4>
+            <p id="modalVideoDesc" class="text-xs text-slate-400"></p>
+        </div>
+    </div>
+
+    <!-- LIVE CODE RUNNER FULL WORKSPACE MODAL OVERLAY -->
+    <div id="codeRunnerModal" class="fixed inset-0 z-50 hidden bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center p-4 md:p-8">
+        <div class="max-w-5xl w-full h-[85vh] glass-panel rounded-2xl border border-slate-700 flex flex-col overflow-hidden shadow-2xl">
+            <!-- Terminal Header -->
+            <div class="bg-slate-900 px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="flex gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                    </div>
+                    <span id="modalCodeTitle" class="font-mono text-xs text-slate-300 font-semibold">script.cpp</span>
+                </div>
+                <button onclick="closeModals()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Workspace Body -->
+            <div class="flex-1 grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800 overflow-hidden">
+                <!-- Code Editor View -->
+                <div class="flex flex-col h-full bg-slate-950/80 p-4 font-mono text-xs overflow-auto">
+                    <div class="text-slate-500 text-[10px] uppercase mb-2 flex justify-between">
+                        <span>// Source Code</span>
+                        <span id="modalCodeLang" class="text-cyberNeon">C++</span>
+                    </div>
+                    <pre><code id="modalCodeBody" class="text-slate-200 leading-relaxed whitespace-pre-wrap"></code></pre>
+                </div>
+
+                <!-- Execution Terminal Console -->
+                <div class="flex flex-col h-full bg-black p-4 font-mono text-xs">
+                    <div class="flex justify-between items-center pb-2 mb-2 border-b border-slate-800">
+                        <span class="text-slate-400 text-[10px] uppercase"><i class="fa-solid fa-terminal text-emerald-400 mr-1"></i> Output Terminal</span>
+                        <button id="runCodeBtn" onclick="executeCurrentCode()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3 py-1 rounded text-xs flex items-center gap-1 transition-all">
+                            <i class="fa-solid fa-play"></i> Run Code
+                        </button>
+                    </div>
+                    <div id="terminalOutput" class="flex-1 text-slate-400 space-y-2 overflow-auto font-mono text-xs">
+                        <p class="text-slate-600">// Click "Run Code" button to compile and execute...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN LOGIN SECURITY MODAL OVERLAY -->
+    <div id="adminModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-panel p-6 rounded-2xl max-w-sm w-full border border-purple-500/30 space-y-4">
+            <div class="flex justify-between items-center">
+                <h4 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-shield-halved text-cyberPurple"></i> Admin Verification
+                </h4>
+                <button onclick="closeModals()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-400">Only verified emails can log in to publish or delete portfolio content.</p>
+
+            <form id="adminLoginForm" onsubmit="handleAdminAuth(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[10px] font-mono text-slate-400 mb-1">AUTHORIZED GMAIL</label>
+                    <input type="email" id="adminEmailInput" required placeholder="parthobiswas3221@gmail.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyberPurple">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-mono text-slate-400 mb-1">ADMIN PASSWORD</label>
+                    <input type="password" id="adminPasswordInput" required placeholder="••••••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyberPurple">
+                </div>
+                <div id="adminAuthError" class="text-xs text-rose-400 hidden font-mono"></div>
+                <button type="submit" class="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-lg text-xs transition-all shadow-lg">
+                    Unlock Admin Controls
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // 1. FIREBASE INITIALIZATION FOR REAL-TIME DATABASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForPortfolioApp_312",
+            authDomain: "partho-portfolio.firebaseapp.com",
+            projectId: "partho-portfolio",
+            storageBucket: "partho-portfolio.appspot.com",
+            messagingSenderId: "987654321012",
+            appId: "1:987654321012:web:a1b2c3d4e5f6g7h8"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ALLOWED ADMIN CREDENTIALS
+        const ALLOWED_EMAILS = [
+            'parthobiswas3221@gmail.com',
+            'parthobhai61@gmail.com'
+        ];
+        const ADMIN_PASS = 'Partho Biswas 12345';
+
+        // GLOBAL APP STATE
+        let isAdminLoggedIn = false;
+        let currentCodeSnippet = null;
+
+        // IN-MEMORY STORAGE FOR PORTFOLIO ITEMS
+        let galleryData = [
+            {
+                id: 'g1',
+                title: 'Robotics Circuit Board Schematic',
+                url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
+                desc: 'Screenshot of custom hardware circuit designed for autonomous obstacle avoidance bot.'
+            },
+            {
+                id: 'g2',
+                title: 'C++ OpenGL Graphic Simulation',
+                url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80',
+                desc: 'Digital visualization rendered using C++ graphic libraries.'
+            }
+        ];
+
+        let videoData = [
+            {
+                id: 'v1',
+                title: 'Python Autonomous Bot Demo',
+                url: 'https://www.w3schools.com/html/mov_bbb.mp4',
+                desc: 'Testing live motor feedback and sensor data using Python scripts.'
+            }
+        ];
+
+        let codeData = [
+            {
+                id: 'c1',
+                title: 'Fibonacci Generator in C++',
+                lang: 'cpp',
+                code: `#include <iostream>\nusing namespace std;\n\nint main() {\n    int n = 10, t1 = 0, t2 = 1, nextTerm = 0;\n    cout << "Fibonacci Series: ";\n    for (int i = 1; i <= n; ++i) {\n        if(i == 1) {\n            cout << t1 << ", ";\n            continue;\n        }\n        if(i == 2) {\n            cout << t2 << ", ";\n            continue;\n        }\n        nextTerm = t1 + t2;\n        t1 = t2;\n        t2 = nextTerm;\n        cout << nextTerm << ", ";\n    }\n    return 0;\n}`,
+                output: `Fibonacci Series: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34,`
+            },
+            {
+                id: 'c2',
+                title: 'AI Sensor Processing in Python',
+                lang: 'python',
+                code: `import time\nimport random\n\ndef analyze_sensors():\n    print("[SYS] Initializing Sensor Array...")\n    time.sleep(0.5)\n    sensors = [random.uniform(20.0, 30.0) for _ in range(4)]\n    print(f"[DATA] Temperature Readings: {sensors}")\n    avg = sum(sensors) / len(sensors)\n    print(f"[RESULT] Average Temp: {avg:.2f}°C - Normal")\n\nanalyze_sensors()`,
+                output: `[SYS] Initializing Sensor Array...\n[DATA] Temperature Readings: [24.12, 25.80, 22.45, 26.10]\n[RESULT] Average Temp: 24.62°C - Normal`
+            }
+        ];
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            setupCanvas();
+            initVisitorCounter();
+            renderGallery();
+            renderVideos();
+            renderCode();
+        });
+
+        // 2. VISITOR COUNTER WITH FIREBASE FIRESTORE
+        function initVisitorCounter() {
+            const visitorRef = db.collection('analytics').doc('visitors');
+            
+            // Increment visitor count in Firestore
+            visitorRef.set({
+                count: firebase.firestore.FieldValue.increment(1)
+            }, { merge: true }).catch(() => {
+                // Fallback for local testing
+                let count = localStorage.getItem('partho_visits') || 142;
+                count++;
+                localStorage.setItem('partho_visits', count);
+                document.getElementById('visitorCountDisplay').innerText = count;
+            });
+
+            // Listen for live updates
+            visitorRef.onSnapshot((doc) => {
+                if (doc.exists && doc.data().count) {
+                    document.getElementById('visitorCountDisplay').innerText = doc.data().count;
+                }
+            });
+        }
+
+        // 3. ADMIN AUTHENTICATION (STRICT EMAIL + PASSWORD CHECK)
+        function openAdminModal() {
+            if(isAdminLoggedIn) {
+                // Logout if clicked again
+                isAdminLoggedIn = false;
+                updateAdminUI();
+                alert("Logged out from Admin Mode.");
+                return;
+            }
+            document.getElementById('adminModal').classList.remove('hidden');
+            document.body.classList.add('modal-active');
+        }
+
+        function handleAdminAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmailInput').value.trim().toLowerCase();
+            const pass = document.getElementById('adminPasswordInput').value;
+            const errDiv = document.getElementById('adminAuthError');
+
+            if(ALLOWED_EMAILS.includes(email) && pass === ADMIN_PASS) {
+                isAdminLoggedIn = true;
+                closeModals();
+                updateAdminUI();
+                alert(`Welcome back Admin (${email})! Control panels unlocked.`);
+            } else {
+                errDiv.innerText = "Error: Invalid Admin Email or Password!";
+                errDiv.classList.remove('hidden');
+            }
+        }
+
+        function updateAdminUI() {
+            const icon = document.getElementById('adminIcon');
+            const btnText = document.getElementById('adminBtnText');
+            
+            if(isAdminLoggedIn) {
+                icon.className = "fa-solid fa-lock-open text-emerald-400";
+                btnText.innerText = "Admin Active (Logout)";
+                
+                document.getElementById('galleryAdminPanel').classList.remove('hidden');
+                document.getElementById('blogAdminPanel').classList.remove('hidden');
+                document.getElementById('codeAdminPanel').classList.remove('hidden');
+            } else {
+                icon.className = "fa-solid fa-lock text-cyberPurple";
+                btnText.innerText = "Admin Access";
+
+                document.getElementById('galleryAdminPanel').classList.add('hidden');
+                document.getElementById('blogAdminPanel').classList.add('hidden');
+                document.getElementById('codeAdminPanel').classList.add('hidden');
+            }
+            
+            renderGallery();
+            renderVideos();
+            renderCode();
+        }
+
+        // 4. RENDERERS & CREATION / DELETION FUNCTIONS
+
+        // --- GALLERY ---
+        function renderGallery() {
+            const grid = document.getElementById('galleryGrid');
+            document.getElementById('galleryCountBadge').innerText = `${galleryData.length} items`;
+            grid.innerHTML = '';
+
+            galleryData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "glass-panel rounded-xl overflow-hidden group cursor-pointer border border-slate-800 hover:border-cyberNeon transition-all flex flex-col justify-between";
+                card.innerHTML = `
+                    <div onclick="openImageModal('${item.url}', '${escapeHtml(item.title)}', '${escapeHtml(item.desc)}')" class="relative overflow-hidden aspect-video bg-slate-950">
+                        <img src="${item.url}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span class="text-xs font-mono bg-black/80 px-3 py-1.5 rounded-full text-cyberNeon border border-cyberNeon/40"><i class="fa-solid fa-expand mr-1"></i> Expand Overlay</span>
+                        </div>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="font-bold text-white text-sm mb-1">${item.title}</h4>
+                            <p class="text-xs text-slate-400 leading-relaxed">${item.desc}</p>
+                        </div>
+                        ${isAdminLoggedIn ? `
+                            <button onclick="deleteGalleryItem('${item.id}')" class="mt-3 text-[10px] font-mono text-rose-400 hover:text-rose-300 flex items-center gap-1 self-start">
+                                <i class="fa-solid fa-trash"></i> Delete Image
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function publishGalleryItem() {
+            const title = document.getElementById('galleryTitleInput').value.trim();
+            const url = document.getElementById('galleryUrlInput').value.trim();
+            const desc = document.getElementById('galleryDescInput').value.trim();
+
+            if(!title || !url) { alert("Please provide title and image URL"); return; }
+
+            galleryData.unshift({ id: 'g_' + Date.now(), title, url, desc });
+            renderGallery();
+
+            document.getElementById('galleryTitleInput').value = '';
+            document.getElementById('galleryUrlInput').value = '';
+            document.getElementById('galleryDescInput').value = '';
+        }
+
+        function deleteGalleryItem(id) {
+            if(confirm("Remove this photo from gallery?")) {
+                galleryData = galleryData.filter(i => i.id !== id);
+                renderGallery();
+            }
+        }
+
+        // --- VIDEO BLOG ---
+        function renderVideos() {
+            const grid = document.getElementById('videoGrid');
+            document.getElementById('blogCountBadge').innerText = `${videoData.length} videos`;
+            grid.innerHTML = '';
+
+            videoData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "glass-panel p-4 rounded-xl border border-slate-800 hover:border-cyberPurple transition-all space-y-3";
+                card.innerHTML = `
+                    <div onclick="openVideoModal('${item.url}', '${escapeHtml(item.title)}', '${escapeHtml(item.desc)}')" class="relative aspect-video bg-slate-950 rounded-lg overflow-hidden group cursor-pointer border border-slate-800 flex items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-cyberPurple/80 flex items-center justify-center text-white text-lg group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-play ml-1"></i>
+                        </div>
+                        <div class="absolute bottom-2 left-2 text-[10px] font-mono bg-black/80 px-2 py-0.5 rounded text-purple-300">Click to Play Theater</div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white text-sm">${item.title}</h4>
+                        <p class="text-xs text-slate-400 mt-1">${item.desc}</p>
+                    </div>
+                    ${isAdminLoggedIn ? `
+                        <button onclick="deleteVideoItem('${item.id}')" class="text-[10px] font-mono text-rose-400 hover:text-rose-300 flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> Delete Video
+                        </button>
+                    ` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function publishVideoItem() {
+            const title = document.getElementById('videoTitleInput').value.trim();
+            const url = document.getElementById('videoUrlInput').value.trim();
+            const desc = document.getElementById('videoDescInput').value.trim();
+
+            if(!title || !url) { alert("Please provide video title and video URL"); return; }
+
+            videoData.unshift({ id: 'v_' + Date.now(), title, url, desc });
+            renderVideos();
+
+            document.getElementById('videoTitleInput').value = '';
+            document.getElementById('videoUrlInput').value = '';
+            document.getElementById('videoDescInput').value = '';
+        }
+
+        function deleteVideoItem(id) {
+            if(confirm("Delete this video post?")) {
+                videoData = videoData.filter(i => i.id !== id);
+                renderVideos();
+            }
+        }
+
+        // --- LIVE CODE SANDBOX (C++ & Python Only) ---
+        function renderCode() {
+            const grid = document.getElementById('codeGrid');
+            document.getElementById('codeCountBadge').innerText = `${codeData.length} scripts`;
+            grid.innerHTML = '';
+
+            codeData.forEach(item => {
+                const isCpp = item.lang === 'cpp';
+                const langBadgeClass = isCpp ? 'bg-cyan-950 text-cyan-400 border-cyan-800' : 'bg-yellow-950 text-yellow-400 border-yellow-800';
+                
+                const card = document.createElement('div');
+                card.className = "glass-panel p-5 rounded-xl border border-slate-800 hover:border-terminalGreen transition-all flex flex-col justify-between space-y-4";
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-mono border px-2 py-0.5 rounded ${langBadgeClass}">${item.lang.toUpperCase()}</span>
+                            <span class="text-[10px] font-mono text-slate-500">Partho's Code</span>
+                        </div>
+                        <h4 class="font-bold text-white text-base">${item.title}</h4>
+                        <pre class="bg-slate-950 p-3 rounded-lg text-[11px] font-mono text-emerald-400 border border-slate-800 max-h-24 overflow-hidden text-ellipsis">${escapeHtml(item.code)}</pre>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2">
+                        <button onclick="openCodeModal('${item.id}')" class="bg-slate-900 hover:bg-slate-800 text-terminalGreen border border-emerald-500/30 hover:border-terminalGreen px-4 py-2 rounded-lg text-xs font-mono flex items-center gap-2 transition-colors">
+                            <i class="fa-solid fa-terminal"></i> Open Live Compiler
+                        </button>
+                        ${isAdminLoggedIn ? `
+                            <button onclick="deleteCodeItem('${item.id}')" class="text-[10px] font-mono text-rose-400 hover:text-rose-300">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function publishCodeItem() {
+            const title = document.getElementById('codeTitleInput').value.trim();
+            const lang = document.getElementById('codeLangInput').value;
+            const output = document.getElementById('codeSimOutputInput').value.trim();
+            const code = document.getElementById('codeBodyInput').value.trim();
+
+            if(!title || !code) { alert("Please provide code name and snippet code"); return; }
+
+            codeData.unshift({
+                id: 'c_' + Date.now(),
+                title,
+                lang,
+                code,
+                output: output || "Process exited with code 0"
+            });
+            renderCode();
+
+            document.getElementById('codeTitleInput').value = '';
+            document.getElementById('codeSimOutputInput').value = '';
+            document.getElementById('codeBodyInput').value = '';
+        }
+
+        function deleteCodeItem(id) {
+            if(confirm("Remove code script from repository?")) {
+                codeData = codeData.filter(i => i.id !== id);
+                renderCode();
+            }
+        }
+
+        // 5. MODAL DISPLAY OVERLAYS (ALADA AREA)
+        function openImageModal(url, title, desc) {
+            document.getElementById('modalImg').src = url;
+            document.getElementById('modalImgTitle').innerText = title;
+            document.getElementById('modalImgDesc').innerText = desc;
+            document.getElementById('imageModal').classList.remove('hidden');
+            document.body.classList.add('modal-active');
+        }
+
+        function openVideoModal(url, title, desc) {
+            const container = document.getElementById('videoPlayerContainer');
+            if(url.includes('youtube.com') || url.includes('youtu.be')) {
+                container.innerHTML = `<iframe src="${url}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>`;
+            } else {
+                container.innerHTML = `<video src="${url}" controls autoplay class="w-full h-full object-contain"></video>`;
+            }
+            document.getElementById('modalVideoTitle').innerText = title;
+            document.getElementById('modalVideoDesc').innerText = desc;
+            document.getElementById('videoModal').classList.remove('hidden');
+            document.body.classList.add('modal-active');
+        }
+
+        function openCodeModal(id) {
+            const item = codeData.find(c => c.id === id);
+            if(!item) return;
+
+            currentCodeSnippet = item;
+            document.getElementById('modalCodeTitle').innerText = item.title + (item.lang === 'cpp' ? '.cpp' : '.py');
+            document.getElementById('modalCodeLang').innerText = item.lang.toUpperCase();
+            document.getElementById('modalCodeBody').innerText = item.code;
+            document.getElementById('terminalOutput').innerHTML = `<p class="text-slate-600">// Click "Run Code" button to compile and execute...</p>`;
+            
+            document.getElementById('codeRunnerModal').classList.remove('hidden');
+            document.body.classList.add('modal-active');
+        }
+
+        function executeCurrentCode() {
+            if(!currentCodeSnippet) return;
+            const term = document.getElementById('terminalOutput');
+            const runBtn = document.getElementById('runCodeBtn');
+
+            runBtn.disabled = true;
+            runBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Compiling...`;
+
+            term.innerHTML = `<p class="text-yellow-400">[BUILD] Compiling ${currentCodeSnippet.lang.toUpperCase()} source file...</p>`;
+
+            setTimeout(() => {
+                term.innerHTML += `<p class="text-blue-400">[EXEC] Executing binary process...</p>`;
+                setTimeout(() => {
+                    term.innerHTML += `<div class="mt-2 p-2 bg-slate-900 border border-slate-800 rounded text-emerald-400 font-mono leading-relaxed">${escapeHtml(currentCodeSnippet.output)}</div>`;
+                    term.innerHTML += `<p class="text-slate-500 text-[10px] mt-2">[DONE] Program exited with code 0 (0x0)</p>`;
+                    runBtn.disabled = false;
+                    runBtn.innerHTML = `<i class="fa-solid fa-play"></i> Run Code`;
+                }, 600);
+            }, 800);
+        }
+
+        function closeModals() {
+            document.getElementById('imageModal').classList.add('hidden');
+            document.getElementById('videoModal').classList.add('hidden');
+            document.getElementById('codeRunnerModal').classList.add('hidden');
+            document.getElementById('adminModal').classList.add('hidden');
+            document.getElementById('videoPlayerContainer').innerHTML = '';
+            document.body.classList.remove('modal-active');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // 6. 3D INTERACTIVE PARTICLE CONSTELLATION BACKGROUND
+        function setupCanvas() {
+            const canvas = document.getElementById('bgCanvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let particles = [];
+            
+            let mouse = { x: null, y: null, radius: 150 };
+
+            window.addEventListener('mousemove', (e) => {
+                mouse.x = e.x;
+                mouse.y = e.y;
+            });
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.vx = (Math.random() - 0.5) * 0.8;
+                    this.vy = (Math.random() - 0.5) * 0.8;
+                    this.radius = Math.random() * 1.8 + 1;
+                    this.color = Math.random() > 0.5 ? '#00f0ff' : '#a855f7';
+                }
+
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    if (this.x < 0 || this.x > width) this.vx *= -1;
+                    if (this.y < 0 || this.y > height) this.vy *= -1;
+
+                    // Mouse Interaction
+                    if (mouse.x != null) {
+                        let dx = mouse.x - this.x;
+                        let dy = mouse.y - this.y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < mouse.radius) {
+                            let force = (mouse.radius - dist) / mouse.radius;
+                            this.x -= (dx / dist) * force * 2;
+                            this.y -= (dy / dist) * force * 2;
+                        }
+                    }
+                }
+
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = this.color;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            const particleCount = Math.min(Math.floor(window.innerWidth / 15), 70);
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+
+                // Draw connecting lines
+                for (let a = 0; a < particles.length; a++) {
+                    for (let b = a + 1; b < particles.length; b++) {
+                        let dx = particles[a].x - particles[b].x;
+                        let dy = particles[a].y - particles[b].y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < 130) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = `rgba(0, 240, 255, ${1 - dist / 130 * 0.85})`;
+                            ctx.lineWidth = 0.6;
+                            ctx.moveTo(particles[a].x, particles[a].y);
+                            ctx.lineTo(particles[b].x, particles[b].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>
